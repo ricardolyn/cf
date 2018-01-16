@@ -16,6 +16,11 @@ contract('Fund', function(accounts) {
     });
 
     it("should set initial attributes", async function() {
-        assert.equal(await fund.getRequestedAmount(initialParams.main), 0);
+        assert.equal(await fund.getRequestedAmount({from: initialParams.main}), 0);
+    });
+
+    it("should add requested amount", async function() {
+        await fund.request({from: initialParams.main, value: 1000})
+        assert.equal(await fund.getRequestedAmount({from: initialParams.main}), 1000);
     });
 });
