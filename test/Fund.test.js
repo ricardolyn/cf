@@ -1,26 +1,42 @@
 const web3 = global.web3;
 
 const Fund = artifacts.require('Fund');
+const OpenFundToken = artifacts.require('OpenFundToken');
 
-contract('Fund', function(accounts) {
+const BigNumber = web3.BigNumber;
+
+contract('Fund', function([_, pendingWallet, wallet, purchaser]) {
 
     const initialParams = {
-        main: accounts[0],
-        pendingWallet: accounts[1]
+        name: "teste",
+        tokenSymbol: "TST"
     };
 
     let fund;
+    let token;
 
     beforeEach(async function() {
-        fund = await Fund.new(initialParams.pendingWallet);
+        fund = await Fund.new(pendingWallet, initialParams.name, initialParams.tokenSymbol);
+        token = await fund.token();
     });
 
     it("should set initial attributes", async function() {
-        assert.equal(await fund.getRequestedAmount({from: initialParams.main}), 0);
+        assert.equal(await fund.getRequestedAmount({from: purchaser}), 0);
+        assert.equal(await token.name(), initialParams.name);
     });
 
-    it("should add requested amount", async function() {
-        await fund.request({from: initialParams.main, value: 1000})
-        assert.equal(await fund.getRequestedAmount({from: initialParams.main}), 1000);
+    it("should add requested amount in tokens", async function() {
+        let weiValue = 1000;
+        let rate = 2;
+        let tokenValue = rate * weiValue;
+
+        await fund.request({from: purchaser, value: weiValue})
+        
+        assert.equal(await fund.getRequestedAmount({from: purchaser}), weiValue);
+        
+        await fund.processPurchase(rate, purchaser);
+        
+        assert.equal(await token.balanceOf(purchaser), new BigNumber(tokenValue));
+        
     });
 });
