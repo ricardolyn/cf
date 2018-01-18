@@ -2,14 +2,14 @@ pragma solidity ^0.4.18;
 
 import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./OpenFundToken.sol";
+import "./CloseFundToken.sol";
 
 contract Fund is Ownable {
     using SafeMath for uint256;
 
     string public name;
     string public tokenSymbol;
-    OpenFundToken public token;
+    CloseFundToken public token;
     
     mapping(address => uint256) pendingRequests;
     address pendingWallet;
@@ -21,8 +21,8 @@ contract Fund is Ownable {
         token = createTokenContract();
     }
 
-    function createTokenContract() internal returns (OpenFundToken) {
-        return new OpenFundToken(name, tokenSymbol, 8);
+    function createTokenContract() internal returns (CloseFundToken) {
+        return new CloseFundToken(1000, name, 8, tokenSymbol);
     }
 
     function () external payable {
@@ -47,7 +47,7 @@ contract Fund is Ownable {
 
         uint256 tokens = getTokenAmount(weiAmount, rate);
 
-        token.mint(buyer, tokens);
+        //token.mint(buyer, tokens);
 
         delete pendingRequests[buyer];
     }
