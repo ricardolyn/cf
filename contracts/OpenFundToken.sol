@@ -1,6 +1,6 @@
 pragma solidity ^0.4.18;
 
-import 'zeppelin-solidity/contracts/token/MintableToken.sol';
+import '../node_modules/zeppelin-solidity/contracts/token/MintableToken.sol';
 
 contract OpenFundToken is MintableToken {
     string public name;

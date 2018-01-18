@@ -31,12 +31,13 @@ contract('Fund', function([_, pendingWallet, wallet, purchaser]) {
         let tokenValue = rate * weiValue;
 
         await fund.request({from: purchaser, value: weiValue})
-        
-        assert.equal(await fund.getRequestedAmount({from: purchaser}), weiValue);
+
+        let requestedAmount = await fund.getRequestedAmount({from: purchaser});
+        assert.equal(requestedAmount.toNumber(), weiValue);
         
         await fund.processPurchase(rate, purchaser);
         
-        assert.equal(await token.balanceOf(purchaser), new BigNumber(tokenValue));
+        assert.equal(await token.balanceOf(purchaser), tokenValue);
         
     });
 });
