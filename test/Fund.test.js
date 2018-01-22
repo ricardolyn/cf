@@ -17,11 +17,12 @@ contract('Fund', function([_, pendingWallet, wallet, purchaser]) {
 
     beforeEach(async function() {
         fund = await Fund.new(pendingWallet, initialParams.name, initialParams.tokenSymbol);
-        token = await fund.token();
+        token = OpenFundToken.at(await fund.token());
     });
 
     it("should set initial attributes", async function() {
         assert.equal(await fund.getRequestedAmount({from: purchaser}), 0);
+        assert.equal(await fund.name(), initialParams.name);
         assert.equal(await token.name(), initialParams.name);
     });
 
@@ -29,15 +30,14 @@ contract('Fund', function([_, pendingWallet, wallet, purchaser]) {
         let weiValue = 1000;
         let rate = 2;
         let tokenValue = rate * weiValue;
-
         await fund.request({from: purchaser, value: weiValue})
-
         let requestedAmount = await fund.getRequestedAmount({from: purchaser});
         assert.equal(requestedAmount.toNumber(), weiValue);
         
         await fund.processPurchase(rate, purchaser);
         
-        assert.equal(await token.balanceOf(purchaser), tokenValue);
-        
+        let balance = await token.balanceOf(purchaser);
+        assert.equal(balance, tokenValue);
     });
+
 });

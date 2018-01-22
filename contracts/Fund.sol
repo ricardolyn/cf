@@ -2,59 +2,84 @@ pragma solidity ^0.4.18;
 
 import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./CloseFundToken.sol";
+import "./OpenFundToken.sol";
 
 contract Fund is Ownable {
     using SafeMath for uint256;
 
     string public name;
     string public tokenSymbol;
-    CloseFundToken public token;
+    OpenFundToken public token;
     
-    mapping(address => uint256) pendingRequests;
-    address pendingWallet;
+    mapping(address => uint256) pendingPurchases;
+    mapping(address => uint256) pendingSells;
+    address investmentWallet;
 
-    function Fund(address _pendingWallet, string _name, string _tokenSymbol) public {
-        pendingWallet = _pendingWallet;
+    function Fund(address _investmentWallet, string _name, string _tokenSymbol) public {
+        investmentWallet = _investmentWallet;
         name = _name;
         tokenSymbol = _tokenSymbol;
         token = createTokenContract();
     }
 
-    function createTokenContract() internal returns (CloseFundToken) {
-        return new CloseFundToken(1000, name, 8, tokenSymbol);
+    function createTokenContract() internal returns (OpenFundToken) {
+        return new OpenFundToken(name, tokenSymbol, 8);
     }
 
     function () external payable {
-        request();
+        purchase();
     }
 
-    function request() public payable {
+    function purchase() public payable {
         uint256 weiAmount = msg.value;
         address buyer = msg.sender;
-        pendingRequests[buyer] = pendingRequests[buyer].add(weiAmount); // add amount to the pending requests to be processed
-        pendingWallet.transfer(weiAmount); // add amount to the wallet
+        pendingPurchases[buyer] = pendingPurchases[buyer].add(weiAmount); // add amount to the pending requests to be processed
+        this.transfer(weiAmount); // add amount to the wallet
 
-        TokenRequest(buyer, weiAmount);
+        TokenPurchaseRequest(buyer, weiAmount);
+    }
+
+    function sell(uint256 tokenAmount) public onlyOwner {
+        address buyer = msg.sender;
+        pendingSells[buyer] = pendingSells[buyer].add(tokenAmount);
+
+        TokenPurchaseRequest(buyer, tokenAmount);
     }
 
     function getRequestedAmount() public view returns (uint256) {
-        return pendingRequests[msg.sender];
+        return pendingPurchases[msg.sender];
     }
 
-    function processPurchase(uint256 rate, address buyer) public onlyOwner {
-        uint256 weiAmount = pendingRequests[buyer];
+    function processPurchase(uint256 nav, address buyer) public onlyOwner { // nav: net asset value. is the price per share of the fund
+        uint256 weiAmount = pendingPurchases[buyer];
 
-        uint256 tokens = getTokenAmount(weiAmount, rate);
+        uint256 tokens = getTokenAmount(weiAmount, nav);
 
-        //token.mint(buyer, tokens);
+        token.mint(buyer, tokens);
+        investmentWallet.transfer(weiAmount);
 
-        delete pendingRequests[buyer];
+        delete pendingPurchases[buyer];
     }
 
-    function getTokenAmount(uint256 weiAmount, uint256 rate) internal pure returns(uint256) {
-        return weiAmount.mul(rate);
+    function processSell(uint256 nav, address buyer) public onlyOwner {
+        uint256 weiAmount = pendingSells[buyer];
+
+        uint256 tokens = getWeiAmount(weiAmount, nav);
+
+        token.burn(buyer, tokens);
+        buyer.transfer(weiAmount);
+
+        delete pendingSells[buyer];
     }
 
-    event TokenRequest(address indexed purchaser, uint256 amount);
+    function getTokenAmount(uint256 weiAmount, uint256 nav) internal pure returns(uint256) {
+        return weiAmount.div(nav);
+    }
+
+    function getWeiAmount(uint256 tokenAmount, uint256 nav) internal pure returns(uint256) {
+        return tokenAmount.mul(nav);
+    }
+
+    event TokenPurchaseRequest(address indexed purchaser, uint256 amount);
+    event TokenSellRequest(address indexed purchaser, uint256 amount);
 }
