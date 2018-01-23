@@ -34,7 +34,7 @@ contract Fund is Ownable {
         uint256 weiAmount = msg.value;
         address buyer = msg.sender;
         pendingPurchases[buyer] = pendingPurchases[buyer].add(weiAmount); // add amount to the pending requests to be processed
-        this.transfer(weiAmount); // add amount to the wallet
+        owner.transfer(weiAmount); // add amount to the wallet
 
         TokenPurchaseRequest(buyer, weiAmount);
     }
@@ -46,11 +46,15 @@ contract Fund is Ownable {
         TokenPurchaseRequest(buyer, tokenAmount);
     }
 
-    function getRequestedAmount() public view returns (uint256) {
+    function getPendingAmount() public view returns (uint256) {
         return pendingPurchases[msg.sender];
     }
 
-    function processPurchase(uint256 nav, address buyer) public onlyOwner { // nav: net asset value. is the price per share of the fund
+    function pendingAmountOf(address buyer) public view onlyOwner returns (uint256) {
+        return pendingPurchases[buyer];
+    }
+
+    function processPurchase(uint256 nav, address buyer) public onlyOwner payable { // nav: net asset value. is the price per share of the fund
         uint256 weiAmount = pendingPurchases[buyer];
 
         uint256 tokens = getTokenAmount(weiAmount, nav);
@@ -61,7 +65,7 @@ contract Fund is Ownable {
         delete pendingPurchases[buyer];
     }
 
-    function processSell(uint256 nav, address buyer) public onlyOwner {
+    function processSell(uint256 nav, address buyer) public onlyOwner payable {
         uint256 weiAmount = pendingSells[buyer];
 
         uint256 tokens = getWeiAmount(weiAmount, nav);
