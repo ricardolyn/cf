@@ -18,13 +18,6 @@ contract('Fund', function([ownerWallet, investmentWallet, wallet, purchaser]) {
     beforeEach(async function() {
         fund = await Fund.new(investmentWallet, initialParams.name, initialParams.tokenSymbol);
         token = OpenFundToken.at(await fund.token());
-
-        // logs?
-        // var event = fund.Log();
-        // event.watch(function(error, result){
-        //     if (!error)
-        //         console.log(result.args.amount.toNumber());
-        // });
     });
 
     it("should set initial attributes", async function() {
@@ -49,6 +42,13 @@ contract('Fund', function([ownerWallet, investmentWallet, wallet, purchaser]) {
     });
 
     it("should sell tokens", async function() {
+        // // logs?
+        // var event = fund.Log();
+        // event.watch(function(error, result){
+        //     if (!error)
+        //         console.log(result.args.amount.toNumber());
+        // });
+
         let nav = 3;
         let tokenValue = 1000;
         let weiValue = tokenValue * nav;
@@ -58,9 +58,8 @@ contract('Fund', function([ownerWallet, investmentWallet, wallet, purchaser]) {
 
         let sellTokens = 100;
         
-        await fund.sell(sellTokens);
+        await fund.sell(sellTokens, {from: purchaser});
         await fund.processSell(nav, purchaser, {value: weiValue})
-
 
         let balance = await token.balanceOf(purchaser);
         assert.equal(balance.toNumber(), tokenValue - sellTokens);

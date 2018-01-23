@@ -37,13 +37,15 @@ contract Fund is Ownable {
         owner.transfer(weiAmount); // add amount to the wallet
 
         TokenPurchaseRequest(buyer, weiAmount);
+        
     }
 
-    function sell(uint256 tokenAmount) public onlyOwner {
-        address buyer = msg.sender;
-        pendingSells[buyer] = pendingSells[buyer].add(tokenAmount);
+    function sell(uint256 tokenAmount) public {
+        require(token.balanceOf(msg.sender) >= tokenAmount);
 
-        TokenPurchaseRequest(buyer, tokenAmount);
+        pendingSells[msg.sender] = pendingSells[msg.sender].add(tokenAmount);
+
+        TokenSellRequest(msg.sender, tokenAmount);
     }
 
     function getPendingAmount() public view returns (uint256) {
@@ -60,17 +62,18 @@ contract Fund is Ownable {
         uint256 tokens = getTokenAmount(weiAmount, nav);
 
         token.mint(buyer, tokens);
+        
         investmentWallet.transfer(weiAmount);
 
         delete pendingPurchases[buyer];
     }
 
     function processSell(uint256 nav, address buyer) public onlyOwner payable {
-        uint256 weiAmount = pendingSells[buyer];
+        uint256 tokenAmount = pendingSells[buyer];
 
-        uint256 tokens = getWeiAmount(weiAmount, nav);
+        uint256 weiAmount = getWeiAmount(tokenAmount, nav);
 
-        token.burn(buyer, tokens);
+        token.burn(buyer, tokenAmount);
         buyer.transfer(weiAmount);
 
         delete pendingSells[buyer];
@@ -86,4 +89,5 @@ contract Fund is Ownable {
 
     event TokenPurchaseRequest(address indexed purchaser, uint256 amount);
     event TokenSellRequest(address indexed purchaser, uint256 amount);
+    event Log(uint256 amount);
 }
