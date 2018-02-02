@@ -38,7 +38,10 @@ contract('Fund', function([ownerWallet, investmentWallet, wallet, purchaser]) {
         await fund.processPurchase(nav, purchaser, {value: requestedAmount});
         
         let balance = await token.balanceOf(purchaser);
+        let totalSupply = await token.totalSupply();
+
         assert.equal(balance.toNumber(), tokenValue);
+        assert.equal(totalSupply.toNumber(), tokenValue);
     });
 
     it("should sell tokens", async function() {
