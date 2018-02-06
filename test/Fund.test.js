@@ -102,9 +102,7 @@ contract('Fund', function ([ownerWallet, investmentWallet, wallet, purchaser]) {
         let tokenAmount = 1000;
         let weiValue = tokenAmount * nav;
 
-        //await mockPurchase(tokenAmount, nav)
-        await fund.purchase({ from: purchaser, value: weiValue })
-        await fund.processPurchase(nav, purchaser, { value: weiValue });
+        await mockPurchase(tokenAmount, nav)
 
         let sellTokens = 100;
 
