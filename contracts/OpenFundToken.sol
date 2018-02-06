@@ -1,7 +1,7 @@
 pragma solidity ^0.4.18;
 
 import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
-import '../node_modules/zeppelin-solidity/contracts/token/MintableToken.sol';
+import '../node_modules/zeppelin-solidity/contracts/token/ERC20/MintableToken.sol';
 
 contract OpenFundToken is MintableToken {
     using SafeMath for uint256;
@@ -35,7 +35,7 @@ contract OpenFundToken is MintableToken {
         // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
         balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
+        totalSupply_ = totalSupply_.sub(_value);
         Burn(burner, _value);
     }
 }
